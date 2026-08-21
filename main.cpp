@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define RED_TEXT_START "\033[91m"
+#define RED_TEXT_END "\033[0m"
 #define DELTA 1e-8
 
 enum Errors {
@@ -23,7 +25,7 @@ enum Solutions {
 
 Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
 Errors read_one(double* const pt_coef, const char* str_num);
-void clean_buffer();
+Errors clean_buffer();
 
 Solutions linear_solver(const double first_coef, const double second_coef, double* const pt_x);
 Solutions square_solver(const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
@@ -71,24 +73,34 @@ Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* cons
 
 
 Errors read_one(double* const pt_coef, const char* str_num) {
+    bool is_num_read = false;
+    bool is_buffer_cleared = false;
     printf("Enter %s coefficient: ", str_num);
 
-    while (scanf("%lg", pt_coef) != 1) {
-        clean_buffer();
+    while ((is_num_read = (bool)scanf("%lg", pt_coef)) != 1 || (is_buffer_cleared = clean_buffer())) {
+        if(!is_num_read ) {
+            clean_buffer();
+        }
 
-        printf("Incorrect input\n"
+        printf(RED_TEXT_START
+               "Incorrect input\n"
                "Try again\n"
+               RED_TEXT_END
                "Enter %s coefficient: ", str_num);
     }
-
-    clean_buffer();
 
     return SUCCESS;
 }
 
 
-void clean_buffer() {
-    while (getchar() != '\n') continue;
+Errors clean_buffer() {
+    Errors error = SUCCESS;
+
+    while (getchar() != '\n') {
+        error = READ_INPUT_ERROR;
+    }
+
+    return error;
 }
 
 
@@ -147,7 +159,6 @@ bool is_equally(const double lhs, const double rhs) {
 
 
 
-
 void print_output(Solutions count_sol, const double first_sol, const double second_sol) {
     if (count_sol > 0) {
         assert(isfinite(first_sol));
@@ -171,10 +182,10 @@ void print_output(Solutions count_sol, const double first_sol, const double seco
             printf("Infinite solution\n");
             break;
         case INIT_VALUE:
-            printf("ERROR\n");
+            printf(RED_TEXT_START "INIT VALUE IN COUNT_SOL ERROR\n" RED_TEXT_END);
             return;
         default:
-            printf("ERROR\n");
+            printf(RED_TEXT_START "SWITCH ERROR\n" RED_TEXT_END);
             return;
     }
 
