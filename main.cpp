@@ -16,7 +16,9 @@
 
 enum Errors {
     SUCCESS = 0,
-    READ_INPUT_ERROR = 1
+    READ_INPUT_ERROR = 1,
+    NOT_EMPTY_BUFFER = 2,
+    OPEN_FILE_ERROR = 3
 };
 
 enum Solutions {
@@ -28,16 +30,14 @@ enum Solutions {
 };
 
 Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Errors read_one(double* const pt_coef, const char* str_num);
-Errors clean_buffer();
+Errors read_one(double* const pt_coef, FILE* file_inp);
+Errors clean_buffer(FILE* file_inp);
 
 Solutions linear_solver(const double first_coef, const double second_coef, double* const pt_x);
 Solutions square_solver(const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
-bool is_zero(const double num);
 bool is_equally(const double lhs, const double rhs);
 
 void print_output(const Solutions count_sol, const double first_sol, const double second_sol);
-
 
 
 int main() {
@@ -64,45 +64,47 @@ Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* cons
     assert(pt_coef_b != pt_coef_c);
     assert(pt_coef_c != pt_coef_a);
 
-    printf("Enter the coefficients of the square equation:\n");
+    char file_name[] = "input.txt";
+    FILE* file_inp = fopen(file_name, "r");
 
-    read_one(pt_coef_a, "first");
+    if (!file_inp) {
+        printf("Error occured while opening file\n");
+        return OPEN_FILE_ERROR;
+    }
 
-    printf("%lg\n", *pt_coef_a);
+    read_one(pt_coef_a, file_inp);
 
-    read_one(pt_coef_b, "second");
+    read_one(pt_coef_b, file_inp);
 
-    read_one(pt_coef_c, "thread");
+    read_one(pt_coef_c, file_inp);
+
+    fclose(file_inp);
 
     return SUCCESS;
 }
 
 
-Errors read_one(double* const pt_coef, const char* str_num) {
-    bool is_num_read = false;
-    bool is_buffer_cleared = false;
-    printf("Enter %s coefficient: ", str_num);
+Errors read_one(double* const pt_coef, FILE* file_inp) {
+    if (fscanf(file_inp, "%lg", pt_coef) != 1 || clean_buffer(file_inp)) {
+        printf(COLOR_TEXT("Incorrect input\n", RED));
 
-    while ((is_num_read = (bool)scanf("%lg", pt_coef)) != 1 || (is_buffer_cleared = clean_buffer())) {
-        if(!is_num_read ) {
-            clean_buffer();
-        }
-
-        printf(COLOR_TEXT(
-                "Incorrect input\n"
-                "Try again\n", RED)
-                "Enter %s coefficient: ", str_num);
+        exit(EXIT_FAILURE);
     }
 
     return SUCCESS;
 }
 
 
-Errors clean_buffer() {
+Errors clean_buffer(FILE* file_inp) {
     Errors error = SUCCESS;
+    char ch = '\0';
 
-    while (getchar() != '\n') {
-        error = READ_INPUT_ERROR;
+    fscanf(file_inp, "%c", &ch);
+
+    while (ch != '\n') {
+        fscanf(file_inp, "%c", &ch);
+
+        error = NOT_EMPTY_BUFFER;
     }
 
     return error;
