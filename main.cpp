@@ -30,8 +30,8 @@ enum Solutions {
 };
 
 Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Errors read_one(double* const pt_coef, FILE* file_inp);
-Errors clean_buffer(FILE* file_inp);
+Errors read_one(double* const pt_coef, FILE* file_in);
+Errors clean_buffer(FILE* file_in);
 
 Solutions linear_solver(const double first_coef, const double second_coef, double* const pt_x);
 Solutions square_solver(const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
@@ -64,28 +64,28 @@ Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* cons
     assert(pt_coef_b != pt_coef_c);
     assert(pt_coef_c != pt_coef_a);
 
-    char file_name[] = "input.txt";
-    FILE* file_inp = fopen(file_name, "r");
+    char file_in_name[] = "input.txt";
+    FILE* file_in = fopen(file_in_name, "r");
 
-    if (!file_inp) {
+    if (!file_in) {
         printf("Error occured while opening file\n");
         return OPEN_FILE_ERROR;
     }
 
-    read_one(pt_coef_a, file_inp);
+    read_one(pt_coef_a, file_in);
 
-    read_one(pt_coef_b, file_inp);
+    read_one(pt_coef_b, file_in);
 
-    read_one(pt_coef_c, file_inp);
+    read_one(pt_coef_c, file_in);
 
-    fclose(file_inp);
+    fclose(file_in);
 
     return SUCCESS;
 }
 
 
-Errors read_one(double* const pt_coef, FILE* file_inp) {
-    if (fscanf(file_inp, "%lg", pt_coef) != 1 || clean_buffer(file_inp)) {
+Errors read_one(double* const pt_coef, FILE* file_in) {
+    if (fscanf(file_in, "%lg", pt_coef) != 1 || clean_buffer(file_in)) {
         printf(COLOR_TEXT("Incorrect input\n", RED));
 
         exit(EXIT_FAILURE);
@@ -175,26 +175,38 @@ void print_output(Solutions count_sol, const double first_sol, const double seco
         assert(isfinite(second_sol));
     }
 
+    char file_out_name[] = "output.txt";
+    FILE* file_out = fopen(file_out_name, "w");
+
     switch (count_sol) {
+
         case NO_SOLUTION:
-            printf(COLOR_TEXT("No solution\n", GREEN));
+            fprintf(file_out, "No solution\n");
             break;
+
         case ONE_SOLUTION:
-            printf(COLOR_TEXT("One solution: %lg\n", GREEN), first_sol);
+            fprintf(file_out, "One solution: %lg\n", first_sol);
             break;
+
         case TWO_SOLUTION:
-            printf(COLOR_TEXT("Two solution: %lg %lg\n", GREEN), first_sol, second_sol);
+            fprintf(file_out, "Two solution: %lg %lg\n", first_sol, second_sol);
             break;
+
         case INFINITE_SOLUTION:
-            printf(COLOR_TEXT("Infinite solution\n", GREEN));
+            fprintf(file_out, "Infinite solution\n");
             break;
+
         case INIT_VALUE:
-            printf(COLOR_TEXT("INIT VALUE IN COUNT_SOL ERROR\n", RED));
+            fprintf(file_out, "INIT VALUE IN COUNT_SOL ERROR\n");
+            fclose(file_out);
             return;
+
         default:
-            printf(COLOR_TEXT("SWITCH ERROR\n", RED));
+            fprintf(file_out, "SWITCH ERROR\n");
+            fclose(file_out);
             return;
     }
 
+    fclose(file_out);
     return;
 }
