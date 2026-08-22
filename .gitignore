@@ -1,3 +1,4 @@
 *.exe
 flags.txt
 a.out
+test.cpp
