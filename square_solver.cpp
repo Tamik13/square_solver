@@ -14,6 +14,12 @@
 
 #define DELTA 1e-8
 
+const char file_input_name[] = "input.txt";
+const char file_output_name[] = "output.txt";
+
+int line_in_input_file = 1;
+int line_in_output_file = 1;
+
 enum Errors {
     SUCCESS = 0,
     READ_INPUT_ERROR = 1,
@@ -30,8 +36,8 @@ enum Solutions {
 };
 
 Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Errors read_one(double* const pt_coef, FILE* file_in);
-Errors clean_buffer(FILE* file_in);
+Errors read_one(double* const pt_coef, FILE* file_input);
+Errors clean_buffer(FILE* file_input);
 
 Solutions linear_solver(const double first_coef, const double second_coef, double* const pt_x);
 Solutions square_solver(const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
@@ -45,7 +51,12 @@ int main() {
     double first_sol = NAN, second_sol = NAN;
     Solutions count_sol = INIT_VALUE;
 
-    read_input(&coef_a, &coef_b, &coef_c);
+    if (read_input(&coef_a, &coef_b, &coef_c) == READ_INPUT_ERROR) {
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
+
+        return 0;
+    }
 
     count_sol = square_solver(coef_a, coef_b, coef_c, &first_sol, &second_sol);
 
@@ -53,6 +64,9 @@ int main() {
 
     return 0;
 }
+
+
+
 
 
 Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c) {
@@ -64,52 +78,63 @@ Errors read_input(double* const pt_coef_a, double* const pt_coef_b, double* cons
     assert(pt_coef_b != pt_coef_c);
     assert(pt_coef_c != pt_coef_a);
 
-    char file_in_name[] = "input.txt";
-    FILE* file_in = fopen(file_in_name, "r");
+    FILE* file_input = fopen(file_input_name, "r");
 
-    if (!file_in) {
-        printf("Error occured while opening file\n");
+    if (!file_input) {
+        printf(COLOR_TEXT("Error occured while opening %s\n", RED), file_input_name);
         return OPEN_FILE_ERROR;
     }
 
-    read_one(pt_coef_a, file_in);
+    if (read_one(pt_coef_a, file_input) == READ_INPUT_ERROR) {
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
-    read_one(pt_coef_b, file_in);
-
-    read_one(pt_coef_c, file_in);
-
-    fclose(file_in);
-
-    return SUCCESS;
-}
-
-
-Errors read_one(double* const pt_coef, FILE* file_in) {
-    if (fscanf(file_in, "%lg", pt_coef) != 1 || clean_buffer(file_in)) {
-        printf(COLOR_TEXT("Incorrect input\n", RED));
-
-        exit(EXIT_FAILURE);
+        return READ_INPUT_ERROR;
     }
 
+    if (read_one(pt_coef_b, file_input) == READ_INPUT_ERROR) {
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
+
+        return READ_INPUT_ERROR;
+    }
+
+    if (read_one(pt_coef_c, file_input)) {
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
+
+        return READ_INPUT_ERROR;
+    }
+
+    fclose(file_input);
+
     return SUCCESS;
 }
 
 
-Errors clean_buffer(FILE* file_inp) {
+Errors read_one(double* const pt_coef, FILE* file_input) {
+    if (fscanf(file_input, "%lg", pt_coef) != 1 || clean_buffer(file_input)) {
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
+
+        return READ_INPUT_ERROR;
+    }
+
+    line_in_input_file++;
+
+    return SUCCESS;
+}
+
+
+Errors clean_buffer(FILE* file_input) {
     Errors error = SUCCESS;
-    char ch = '\0';
 
-    fscanf(file_inp, "%c", &ch);
-
-    while (ch != '\n') {
-        fscanf(file_inp, "%c", &ch);
-
+    while (fgetc(file_input) != '\n') {
         error = NOT_EMPTY_BUFFER;
     }
 
     return error;
 }
-
 
 
 Solutions linear_solver(const double first_coef, const double second_coef, double* const pt_x) {
@@ -165,7 +190,6 @@ bool is_equally(const double lhs, const double rhs) {
 }
 
 
-
 void print_output(Solutions count_sol, const double first_sol, const double second_sol) {
     if (count_sol > 0) {
         assert(isfinite(first_sol));
@@ -175,38 +199,39 @@ void print_output(Solutions count_sol, const double first_sol, const double seco
         assert(isfinite(second_sol));
     }
 
-    char file_out_name[] = "output.txt";
-    FILE* file_out = fopen(file_out_name, "w");
+    FILE* file_output = fopen(file_output_name, "w");
 
     switch (count_sol) {
 
         case NO_SOLUTION:
-            fprintf(file_out, "No solution\n");
+            fprintf(file_output, "No solution\n");
             break;
 
         case ONE_SOLUTION:
-            fprintf(file_out, "One solution: %lg\n", first_sol);
+            fprintf(file_output, "One solution: x1 = %lg\n", first_sol);
             break;
 
         case TWO_SOLUTION:
-            fprintf(file_out, "Two solution: %lg %lg\n", first_sol, second_sol);
+            fprintf(file_output, "Two solution: x1 = %lg x2 = %lg\n", first_sol, second_sol);
             break;
 
         case INFINITE_SOLUTION:
-            fprintf(file_out, "Infinite solution\n");
+            fprintf(file_output, "Infinite solution\n");
             break;
 
         case INIT_VALUE:
-            fprintf(file_out, "INIT VALUE IN COUNT_SOL ERROR\n");
-            fclose(file_out);
+            fprintf(file_output, "INIT VALUE IN COUNT_SOL ERROR\n");
+            fclose(file_output);
             return;
 
         default:
-            fprintf(file_out, "SWITCH ERROR\n");
-            fclose(file_out);
+            fprintf(file_output, "SWITCH ERROR\n");
+            fclose(file_output);
             return;
     }
 
-    fclose(file_out);
+    line_in_output_file++;
+
+    fclose(file_output);
     return;
 }
