@@ -18,11 +18,8 @@
 
 #define DELTA 1e-3
 
-const char file_input_name[] = "input.txt";
-const char file_output_name[] = "output.txt";
-
-int line_in_input_file = 1;
-int line_in_output_file = 1;
+const char FILE_INPUT_NAME[] = "input.txt";
+const char FILE_OUTPUT_NAME[] = "output.txt";
 
 enum Error_Code {
     SUCCESS,
@@ -41,26 +38,25 @@ enum Count_Solutions {
     TWO_SOLUTIONS
 };
 
+Error_Code where_from_read_input    (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
+Error_Code read_input_from_terminal(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
+Error_Code read_one_from_terminal  (void* const pt_coef,     const char* tupe,        const char* str_num);
+Error_Code read_input_from_file    (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
+Error_Code read_one_from_file      (double* const pt_coef,   FILE* file_input);
 
-Error_Code read_input               (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Error_Code read_input_from_terminal (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Error_Code read_one_from_terminal   (void* const pt_coef,     const char* tupe,        const char* str_num);
-Error_Code read_input_from_file     (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Error_Code read_one_from_file       (double* const pt_coef,   FILE* file_input);
+Count_Solutions linear_solver(const double coef_b, const double coef_c, double* const pt_x);
+Count_Solutions square_solver(const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
 
-Count_Solutions linear_solver       (const double coef_b, const double coef_c, double* const pt_x);
-Count_Solutions square_solver       (const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
+Error_Code where_print_output      (const Count_Solutions count_sol, const double first_sol, const double second_sol);
+Error_Code print_output_to_terminal(const Count_Solutions count_sol, const double first_sol, const double second_sol);
+Error_Code print_output_to_file    (const Count_Solutions count_sol, const double first_sol, const double second_sol);
 
-Error_Code print_output             (const Count_Solutions count_sol, const double first_sol, const double second_sol);
-Error_Code print_output_to_terminal (const Count_Solutions count_sol, const double first_sol, const double second_sol);
-Error_Code print_output_to_file     (const Count_Solutions count_sol, const double first_sol, const double second_sol);
+Error_Code run_one_test(const double coef_a, const double coef_b, const double coef_c);
+Error_Code check_answer(const double coef_a, const double coef_b, const double coef_c, double first_sol, double second_sol, const Count_Solutions count_sol);
+Error_Code run_tests   ();
 
-Error_Code run_one_test             (const double coef_a, const double coef_b, const double coef_c);
-Error_Code check_answer             (const double coef_a, const double coef_b, const double coef_c, double first_sol, double second_sol, const Count_Solutions count_sol);
-Error_Code run_tests();
-
-bool is_equally                     (const double lhs, const double rhs);
-Error_Code clean_buffer             (FILE* file_input);
+bool is_equally         (const double lhs, const double rhs);
+Error_Code clean_buffer (FILE* file_input);
 double get_random_number();
 
 
@@ -75,28 +71,28 @@ int main(int args, char* argv[]) {
 
         run_tests();
 
-        return 0;
+        return EXIT_FAILURE;
     }
 
-    if (read_input(&coef_a, &coef_b, &coef_c) == READ_INPUT_ERROR) {
+    if (where_from_read_input(&coef_a, &coef_b, &coef_c) == READ_INPUT_ERROR) {
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
-        return 0;
+        return EXIT_FAILURE;
     }
 
     count_sol = square_solver(coef_a, coef_b, coef_c, &first_sol, &second_sol);
 
-    if (print_output(count_sol, first_sol, second_sol) == PRINT_OUTPUT_ERROR) {
+    if (where_print_output(count_sol, first_sol, second_sol) == PRINT_OUTPUT_ERROR) {
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
-        return 0;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 
-Error_Code read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c) {
+Error_Code where_from_read_input(double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c) {
     assert(pt_coef_a != NULL);
     assert(pt_coef_b != NULL);
     assert(pt_coef_c != NULL);
@@ -171,7 +167,7 @@ Error_Code read_one_from_terminal(void* const pt_coef, const char* type ,const c
         printf(COLOR_TEXT(
                 "Incorrect input\n"
                 "Try again\n", RED)
-                "Enter %s coefficient: ", str_num);
+                "%s", str_num);
     }
 
     return SUCCESS;
@@ -187,29 +183,26 @@ Error_Code read_input_from_file(double* const pt_coef_a, double* const pt_coef_b
     assert(pt_coef_b != pt_coef_c);
     assert(pt_coef_c != pt_coef_a);
 
-    FILE* file_input = fopen(file_input_name, "r");
+    FILE* file_input = fopen(FILE_INPUT_NAME, "r");
 
     if (!file_input) {
-        printf(COLOR_TEXT("Error occured while opening %s\n", RED), file_input_name);
+        printf(COLOR_TEXT("Error occured while opening %s\n", RED), FILE_INPUT_NAME);
         return OPEN_FILE_ERROR;
     }
 
     if (read_one_from_file(pt_coef_a, file_input) == READ_INPUT_ERROR) {
-        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
         return READ_INPUT_ERROR;
     }
 
     if (read_one_from_file(pt_coef_b, file_input) == READ_INPUT_ERROR) {
-        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
         return READ_INPUT_ERROR;
     }
 
     if (read_one_from_file(pt_coef_c, file_input)) {
-        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
         return READ_INPUT_ERROR;
@@ -222,8 +215,10 @@ Error_Code read_input_from_file(double* const pt_coef_a, double* const pt_coef_b
 
 
 Error_Code read_one_from_file(double* const pt_coef, FILE* file_input) {
+    static int line_in_input_file = 1;
+
     if (fscanf(file_input, "%lg", pt_coef) != 1 || clean_buffer(file_input)) {
-        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", file_input_name, line_in_input_file);
+        printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", FILE_INPUT_NAME, line_in_input_file);
         printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
 
         return READ_INPUT_ERROR;
@@ -299,7 +294,7 @@ bool is_equally(const double lhs, const double rhs) {
 }
 
 
-Error_Code print_output(const Count_Solutions count_sol, const double first_sol, const double second_sol) {
+Error_Code where_print_output(const Count_Solutions count_sol, const double first_sol, const double second_sol) {
     if (count_sol > 0) {
         assert(isfinite(first_sol));
     }
@@ -391,7 +386,7 @@ Error_Code print_output_to_file(Count_Solutions count_sol, const double first_so
         assert(isfinite(second_sol));
     }
 
-    FILE* file_output = fopen(file_output_name, "w");
+    FILE* file_output = fopen(FILE_OUTPUT_NAME, "w");
 
     switch (count_sol) {
 
@@ -425,8 +420,6 @@ Error_Code print_output_to_file(Count_Solutions count_sol, const double first_so
             fclose(file_output);
             return PRINT_OUTPUT_ERROR;
     }
-
-    line_in_output_file++;
 
     fclose(file_output);
     return SUCCESS;
@@ -497,6 +490,9 @@ Error_Code check_answer(const double coef_a, const double coef_b, const double c
                 return ERROR_IN_TEST;
             }
             break;
+        case INIT_VALUE:
+        case INFINITE_SOLUTIONS:
+        case NO_SOLUTIONS:
         default:
             return SUCCESS;
     }
