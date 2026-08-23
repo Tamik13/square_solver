@@ -9,11 +9,14 @@
 
 #define COLOR_TEXT(STR, COLOR) "\033[" COLOR "m" STR "\033[0m"
 
+#define DOUBLE "%lg"
+#define UNSIGNED_INT "%ud"
+
 #define RED "91"
 #define GREEN "92"
 #define BLUE "94"
 
-#define DELTA 1e-4
+#define DELTA 1e-3
 
 const char file_input_name[] = "input.txt";
 const char file_output_name[] = "output.txt";
@@ -41,23 +44,24 @@ enum Count_Solutions {
 
 Error_Code read_input               (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
 Error_Code read_input_from_terminal (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
-Error_Code read_one_from_terminal   (double* const pt_coef,   const char* str_num);
+Error_Code read_one_from_terminal   (void* const pt_coef,     const char* tupe,        const char* str_num);
 Error_Code read_input_from_file     (double* const pt_coef_a, double* const pt_coef_b, double* const pt_coef_c);
 Error_Code read_one_from_file       (double* const pt_coef,   FILE* file_input);
-Error_Code clean_buffer             (FILE* file_input);
 
 Count_Solutions linear_solver       (const double coef_b, const double coef_c, double* const pt_x);
 Count_Solutions square_solver       (const double coef_a, const double coef_b, const double coef_c, double* const pt_x1, double* const pt_x2);
-bool is_equally                     (const double lhs, const double rhs);
 
 Error_Code print_output             (const Count_Solutions count_sol, const double first_sol, const double second_sol);
 Error_Code print_output_to_terminal (const Count_Solutions count_sol, const double first_sol, const double second_sol);
 Error_Code print_output_to_file     (const Count_Solutions count_sol, const double first_sol, const double second_sol);
 
-Error_Code run_tests();
 Error_Code run_one_test             (const double coef_a, const double coef_b, const double coef_c);
-double get_random_number();
 Error_Code check_answer             (const double coef_a, const double coef_b, const double coef_c, double first_sol, double second_sol, const Count_Solutions count_sol);
+Error_Code run_tests();
+
+bool is_equally                     (const double lhs, const double rhs);
+Error_Code clean_buffer             (FILE* file_input);
+double get_random_number();
 
 
 
@@ -145,22 +149,21 @@ Error_Code read_input_from_terminal(double* const pt_coef_a, double* const pt_co
 
     printf("Enter the coefficients of the square equation:\n");
 
-    read_one_from_terminal(pt_coef_a, "first");
+    read_one_from_terminal(pt_coef_a, DOUBLE, "Enter first coefficient: ");
 
-    read_one_from_terminal(pt_coef_b, "second");
+    read_one_from_terminal(pt_coef_b, DOUBLE, "Enter second coefficient: ");
 
-    read_one_from_terminal(pt_coef_c, "thread");
+    read_one_from_terminal(pt_coef_c, DOUBLE, "Enter thread coefficient: ");
 
     return SUCCESS;
 }
 
 
-Error_Code read_one_from_terminal(double* const pt_coef, const char* str_num) {
+Error_Code read_one_from_terminal(void* const pt_coef, const char* type ,const char* str_num) {
     bool is_num_read = false;
-    bool is_buffer_cleared = false;
-    printf("Enter %s coefficient: ", str_num);
+    printf("%s", str_num);
 
-    while ((is_num_read = (bool)scanf("%lg", pt_coef)) != 1 || (is_buffer_cleared = clean_buffer(stdin))) {
+    while ((is_num_read = (bool)scanf(type, pt_coef)) != 1 || clean_buffer(stdin)) {
         if(!is_num_read ) {
             clean_buffer(stdin);
         }
@@ -292,7 +295,7 @@ bool is_equally(const double lhs, const double rhs) {
     assert(isfinite(lhs));
     assert(isfinite(rhs));
 
-    return abs(lhs - rhs) < DELTA;
+    return fabs(lhs - rhs) < DELTA;
 }
 
 
@@ -433,9 +436,7 @@ Error_Code print_output_to_file(Count_Solutions count_sol, const double first_so
 Error_Code run_tests() {
     unsigned int count_tests = 0;
 
-    printf("Enter count tests\n");
-
-    scanf("%ud", &count_tests);
+    read_one_from_terminal(&count_tests, UNSIGNED_INT, "Enter count tests\n");
 
     for (unsigned int i = 0; i < count_tests; i++) {
         const double coef_a = get_random_number(), coef_b = get_random_number(), coef_c = get_random_number();
