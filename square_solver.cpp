@@ -53,7 +53,7 @@ struct solutions_s {
 error_code_e where_from_read_input   (coefficients_s* const coefs);
 error_code_e read_input_from_terminal(coefficients_s* const coefs);
 error_code_e read_input_from_file    (coefficients_s* const coefs);
-error_code_e read_one_from_terminal  (void* const coef, const char* type, const char* str_num);
+error_code_e read_one_from_terminal  (void* const coef, const char* type, const char* const message, const char* const message_error);
 error_code_e read_one_from_file      (void* const coef, const char* const type, FILE* const file_input, int* const line_in_input_file);
 
 error_code_e linear_solver(const coefficients_s coefs, solutions_s* const sol);
@@ -111,16 +111,20 @@ error_code_e where_from_read_input(coefficients_s* coefs) {
     assert(coefs != NULL);
 
     int variant_input;
+    error_code_e error_code = SUCCESS;
+    bool is_input_read = false;
 
     read_one_from_terminal(&variant_input, CHAR,
             "If you want read input from terminal - press T\n"
-            "else, if you want read input from file - press F\n");
+            "else, if you want read input from file - press F\n", "");
 
-    error_code_e error_code = SUCCESS;
-    do {
+
+
+    while (!is_input_read) {
         switch (variant_input) {
             case 'T':
                 error_code = read_input_from_terminal(coefs);
+                is_input_read = true;
                 if (error_code == READ_INPUT_ERROR) {
                     printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
                 }
@@ -128,6 +132,7 @@ error_code_e where_from_read_input(coefficients_s* coefs) {
                 break;
             case 'F':
                 error_code = read_input_from_file(coefs);
+                is_input_read = true;
                 if (error_code == READ_INPUT_ERROR) {
                     printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
                 }
@@ -135,10 +140,11 @@ error_code_e where_from_read_input(coefficients_s* coefs) {
                 break;
             default:
                 read_one_from_terminal(&variant_input, CHAR,
+                COLOR_TEXT("Incorrect input\n", RED)
                 "If you want print output to terminal - press T\n"
-                "else, if you want print output to file - press F\n");
+                "else, if you want print output to file - press F\n", "");
         }
-    } while (variant_input != 'T' && variant_input != 'F');
+    }
 
     return error_code;
 }
@@ -149,11 +155,14 @@ error_code_e read_input_from_terminal(coefficients_s* coefs) {
 
     printf("Enter the coefficients_s of the square equation:\n");
 
-    read_one_from_terminal(&(coefs->coef_a), DOUBLE, "Enter first coefficient: ");
+    read_one_from_terminal(&(coefs->coef_a), DOUBLE, "Enter first coefficient: ",
+                            COLOR_TEXT("Incorrect input\n", RED));
 
-    read_one_from_terminal(&(coefs->coef_b), DOUBLE, "Enter second coefficient: ");
+    read_one_from_terminal(&(coefs->coef_b), DOUBLE, "Enter first coefficient: ",
+                            COLOR_TEXT("Incorrect input\n", RED));
 
-    read_one_from_terminal(&(coefs->coef_c), DOUBLE, "Enter thread coefficient: ");
+    read_one_from_terminal(&(coefs->coef_c), DOUBLE, "Enter first coefficient: ",
+                            COLOR_TEXT("Incorrect input\n", RED));
 
     return SUCCESS;
 }
@@ -205,26 +214,25 @@ error_code_e read_input_from_file(coefficients_s* const coefs) {
 }
 
 
-error_code_e read_one_from_terminal(void* const coef, const char* type ,const char* str_num) {
+error_code_e read_one_from_terminal(void* const coef, const char* type ,const char* message, const char* error_message) {
     assert(coef != NULL);
     assert(type != NULL);
-    assert(str_num != NULL);
+    assert(message != NULL);
 
+    error_code_e error_code = SUCCESS;
     bool is_num_read = false;
-    printf("%s", str_num);
+    printf("%s", message);
 
     while ((is_num_read = (bool)scanf(type, coef)) != 1 || clean_buffer(stdin)) {
         if(!is_num_read ) {
             clean_buffer(stdin);
         }
 
-        printf(COLOR_TEXT(
-                "Incorrect input\n"
-                "Try again\n", RED)
-                "%s", str_num);
+
+        printf("%s%s",error_message, message);
     }
 
-    return SUCCESS;
+    return error_code;
 }
 
 
@@ -232,6 +240,7 @@ error_code_e read_one_from_file(void* const coef, const char* const type, FILE* 
     assert(coef != NULL);
     assert(type != NULL);
     assert(file_input != NULL);
+    assert(line_in_input_file != NULL);
 
     if (fscanf(file_input, type, coef) != 1 || clean_buffer(file_input)) {
         printf("%s:%d  " COLOR_TEXT("Incorrect input", RED) "\n", FILE_INPUT_NAME, *line_in_input_file);
@@ -313,17 +322,18 @@ error_code_e where_print_output(const solutions_s sol) {
     }
 
     int variant_output = 0;
+    error_code_e error_code = SUCCESS;
+    bool is_input_read = false;
 
     read_one_from_terminal(&variant_output, CHAR,
             "If you want print output to terminal - press T\n"
-            "else, if you want print output to file - press F\n");
+            "else, if you want print output to file - press F\n", "");
 
-    error_code_e error_code = SUCCESS;
-
-    do {
+    while (!is_input_read) {
         switch (variant_output) {
             case 'T':
                 error_code = print_output_to_terminal(sol);
+                is_input_read = true;
                 if (error_code == PRINT_OUTPUT_ERROR) {
                     printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
                 }
@@ -331,6 +341,7 @@ error_code_e where_print_output(const solutions_s sol) {
 
             case 'F':
                 error_code = print_output_to_file(sol);
+                is_input_read = true;
                 if (error_code == PRINT_OUTPUT_ERROR) {
                     printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
                 }
@@ -338,10 +349,11 @@ error_code_e where_print_output(const solutions_s sol) {
 
             default:
                 read_one_from_terminal(&variant_output, CHAR,
+                COLOR_TEXT("Incorrect input\n", RED)
                 "If you want print output to terminal - press T\n"
-                "else, if you want print output to file - press F\n");
+                "else, if you want print output to file - press F\n", "");
         }
-    } while (variant_output != 'T' && variant_output != 'F');
+    }
 
     return error_code;
 
@@ -459,7 +471,7 @@ error_code_e print_output_to_file(const solutions_s sol) {
 
 error_code_e run_tests() {
     unsigned int count_tests = 0;
-    read_one_from_terminal(&count_tests, UNSIGNED_INT, "Enter count tests\n");
+    read_one_from_terminal(&count_tests, UNSIGNED_INT, "Enter count tests\n", COLOR_TEXT("Incorrect input\n", RED));
 
     srand(time_t());
 
