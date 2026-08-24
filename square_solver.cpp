@@ -9,18 +9,19 @@
 
 #define COLOR_TEXT(STR, COLOR) "\033[" COLOR "m" STR "\033[0m"
 
-#define DOUBLE "%lg"
+
+#define DOUBLE       "%lg"
 #define UNSIGNED_INT "%ud"
-#define CHAR "%c"
-#define INT "%d"
+#define CHAR         "%c"
+#define INT          "%d"
 
 #define RED   "91"
 #define GREEN "92"
-#define BLUE "94"
+#define BLUE  "94"
 
 #define EPSILON 1e-3
 
-const char FILE_INPUT_NAME[] = "input.txt";
+const char FILE_INPUT_NAME[]  = "input.txt";
 const char FILE_OUTPUT_NAME[] = "output.txt";
 
 enum error_code_e {
@@ -53,7 +54,7 @@ struct solutions_s {
 error_code_e where_from_read_input   (coefficients_s* const coefs);
 error_code_e read_input_from_terminal(coefficients_s* const coefs);
 error_code_e read_input_from_file    (coefficients_s* const coefs);
-error_code_e read_one_from_terminal  (void* const coef, const char* type, const char* const message, const char* const message_error);
+error_code_e read_one_from_terminal  (void* const coef, const char* const type, const char* const message);
 error_code_e read_one_from_file      (void* const coef, const char* const type, FILE* const file_input, int* const line_in_input_file);
 
 error_code_e linear_solver(const coefficients_s coefs, solutions_s* const sol);
@@ -63,13 +64,14 @@ error_code_e where_print_output      (const solutions_s sol);
 error_code_e print_output_to_terminal(const solutions_s sol);
 error_code_e print_output_to_file    (const solutions_s sol);
 
-error_code_e run_tests       ();
-error_code_e run_one_test    (const coefficients_s coefs);
-error_code_e check_answer    (const coefficients_s coefs, const solutions_s sol);
-bool are_the_solution_correct(const coefficients_s coefs, const double sol);
+error_code_e run_all_tests      ();
+error_code_e run_test_with_coefs(const coefficients_s coefs);
+error_code_e run_manual_test    (const coefficients_s coefs, const solutions_s ref_sol);
+error_code_e check_answer       (const coefficients_s coefs, const solutions_s sol);
+bool are_the_solution_correct   (const coefficients_s coefs, const double sol);
 
-bool is_equally          (const double lhs, const double rhs);
 error_code_e clean_buffer(FILE* const file_input);
+bool is_equally          (const double lhs, const double rhs);
 double get_random_number ();
 
 
@@ -80,9 +82,9 @@ int main(int argc, char* argv[]) {
 
     if (argc != 1 && strcmp(argv[1], "test") == 0) {
 
-        run_tests();
+        run_all_tests();
 
-        return EXIT_FAILURE;
+        return EXIT_SUCCESS;
     }
 
     if (where_from_read_input(&coefs) == READ_INPUT_ERROR) {
@@ -116,7 +118,7 @@ error_code_e where_from_read_input(coefficients_s* coefs) {
 
     read_one_from_terminal(&variant_input, CHAR,
             "If you want read input from terminal - press T\n"
-            "else, if you want read input from file - press F\n", "");
+            "else, if you want read input from file - press F\n");
 
 
 
@@ -139,10 +141,10 @@ error_code_e where_from_read_input(coefficients_s* coefs) {
 
                 break;
             default:
+                printf(COLOR_TEXT("Incorrect input\n", RED));
                 read_one_from_terminal(&variant_input, CHAR,
-                COLOR_TEXT("Incorrect input\n", RED)
                 "If you want print output to terminal - press T\n"
-                "else, if you want print output to file - press F\n", "");
+                "else, if you want print output to file - press F\n");
         }
     }
 
@@ -155,14 +157,11 @@ error_code_e read_input_from_terminal(coefficients_s* coefs) {
 
     printf("Enter the coefficients_s of the square equation:\n");
 
-    read_one_from_terminal(&(coefs->coef_a), DOUBLE, "Enter first coefficient: ",
-                            COLOR_TEXT("Incorrect input\n", RED));
+    read_one_from_terminal(&(coefs->coef_a), DOUBLE, "Enter first coefficient: ");
 
-    read_one_from_terminal(&(coefs->coef_b), DOUBLE, "Enter first coefficient: ",
-                            COLOR_TEXT("Incorrect input\n", RED));
+    read_one_from_terminal(&(coefs->coef_b), DOUBLE, "Enter second coefficient: ");
 
-    read_one_from_terminal(&(coefs->coef_c), DOUBLE, "Enter first coefficient: ",
-                            COLOR_TEXT("Incorrect input\n", RED));
+    read_one_from_terminal(&(coefs->coef_c), DOUBLE, "Enter thread coefficient: ");
 
     return SUCCESS;
 }
@@ -214,7 +213,7 @@ error_code_e read_input_from_file(coefficients_s* const coefs) {
 }
 
 
-error_code_e read_one_from_terminal(void* const coef, const char* type ,const char* message, const char* error_message) {
+error_code_e read_one_from_terminal(void* const coef, const char* type ,const char* message) {
     assert(coef != NULL);
     assert(type != NULL);
     assert(message != NULL);
@@ -229,7 +228,8 @@ error_code_e read_one_from_terminal(void* const coef, const char* type ,const ch
         }
 
 
-        printf("%s%s",error_message, message);
+        printf(COLOR_TEXT("Incorrect input\n", RED));
+        printf("%s", message);
     }
 
     return error_code;
@@ -267,7 +267,7 @@ error_code_e linear_solver(const coefficients_s coefs, solutions_s* const sol) {
         sol->count_sol = ONE_SOLUTION;
         return SUCCESS;
     } else if (is_equally(coefs.coef_c, 0)) {
-        sol->count_sol = INFINITE_SOLUTIONS;
+        sol->count_sol =  INFINITE_SOLUTIONS;
         return SUCCESS;
     } else {
         sol->count_sol = NO_SOLUTIONS;
@@ -293,6 +293,7 @@ error_code_e square_solver(const coefficients_s coefs, solutions_s* const sol) {
     }
 
     double discriminant = coefs.coef_b * coefs.coef_b - 4 * coefs.coef_a * coefs.coef_c;
+    double sqrt_discriminant = sqrt(discriminant);
 
     if (discriminant < 0) {
         sol->count_sol = NO_SOLUTIONS;
@@ -303,8 +304,8 @@ error_code_e square_solver(const coefficients_s coefs, solutions_s* const sol) {
         return SUCCESS;
     }
 
-    sol->first_sol = (-coefs.coef_b + sqrt(discriminant)) / (2 * coefs.coef_a);
-    sol->second_sol = (-coefs.coef_b - sqrt(discriminant)) / (2 * coefs.coef_a);
+    sol->first_sol = (-coefs.coef_b + sqrt_discriminant) / (2 * coefs.coef_a);
+    sol->second_sol = (-coefs.coef_b - sqrt_discriminant) / (2 * coefs.coef_a);
 
     sol->count_sol = TWO_SOLUTIONS;
     return SUCCESS;
@@ -327,7 +328,7 @@ error_code_e where_print_output(const solutions_s sol) {
 
     read_one_from_terminal(&variant_output, CHAR,
             "If you want print output to terminal - press T\n"
-            "else, if you want print output to file - press F\n", "");
+            "else, if you want print output to file - press F\n");
 
     while (!is_input_read) {
         switch (variant_output) {
@@ -348,10 +349,10 @@ error_code_e where_print_output(const solutions_s sol) {
                 break;
 
             default:
+                printf(COLOR_TEXT("Incorrect input\n", RED));
                 read_one_from_terminal(&variant_output, CHAR,
-                COLOR_TEXT("Incorrect input\n", RED)
                 "If you want print output to terminal - press T\n"
-                "else, if you want print output to file - press F\n", "");
+                "else, if you want print output to file - press F\n");
         }
     }
 
@@ -469,29 +470,50 @@ error_code_e print_output_to_file(const solutions_s sol) {
 
 
 
-error_code_e run_tests() {
-    unsigned int count_tests = 0;
-    read_one_from_terminal(&count_tests, UNSIGNED_INT, "Enter count tests\n", COLOR_TEXT("Incorrect input\n", RED));
+error_code_e run_all_tests() {
+    unsigned int count_tests = 0, count_fail_tests = 0;
+    read_one_from_terminal(&count_tests, UNSIGNED_INT, "Enter count tests: ");
 
     srand(time_t());
 
     for (unsigned int i = 0; i < count_tests; i++) {
-        const coefficients_s coefs = {.coef_a = get_random_number(), .coef_b = get_random_number(), .coef_c = get_random_number()};
 
-        if (run_one_test(coefs) == ERROR_IN_TEST) {
-            printf("%s:%d  " COLOR_TEXT("Error in", RED) " %s\n", __FILE__, __LINE__, __FUNCTION__);
-            return ERROR_IN_TEST;
+        const coefficients_s coefs = {.coef_a = get_random_number(), .coef_b = get_random_number(), .coef_c = get_random_number()};
+        if (run_test_with_coefs(coefs) == ERROR_IN_TEST) {
+            count_fail_tests++;
         }
+
     }
+
+    coefficients_s coefs_test1 = {.coef_a = 1, .coef_b = 2, .coef_c = 1};
+    solutions_s sol_test1 = {.count_sol = ONE_SOLUTION, .first_sol = -1, .second_sol = NAN};
+    if (run_manual_test(coefs_test1, sol_test1) == ERROR_IN_TEST) {
+            count_fail_tests++;
+    }
+
+    coefficients_s coefs_test2 = {.coef_a = 0, .coef_b = 0, .coef_c = 0};
+    solutions_s sol_test2 = {.count_sol = INFINITE_SOLUTIONS, .first_sol = NAN, .second_sol = NAN};
+    if (run_manual_test(coefs_test2, sol_test2) == ERROR_IN_TEST) {
+            count_fail_tests++;
+    }
+
+    coefficients_s coefs_test3 = {.coef_a = 0, .coef_b = 0, .coef_c = 5};
+    solutions_s sol_test3 = {.count_sol = NO_SOLUTIONS, .first_sol = NAN, .second_sol = NAN};
+    if (run_manual_test(coefs_test3, sol_test3) == ERROR_IN_TEST) {
+            count_fail_tests++;
+    }
+
+    printf("Count fail tests: %u\n", count_fail_tests);
 
     return SUCCESS;
 }
 
 
-error_code_e run_one_test(const coefficients_s coefs) {
+error_code_e run_test_with_coefs(const coefficients_s coefs) {
     assert(isfinite(coefs.coef_a));
     assert(isfinite(coefs.coef_b));
     assert(isfinite(coefs.coef_c));
+
 
     solutions_s sol = {.first_sol = NAN, .second_sol = NAN, .count_sol = INIT_VALUE};
     square_solver(coefs, &sol);
@@ -505,8 +527,64 @@ error_code_e run_one_test(const coefficients_s coefs) {
 }
 
 
-double get_random_number() {
-    return (double)(rand() % 1000000) / (rand() % 5 + 1);
+error_code_e run_manual_test(const coefficients_s coefs, const solutions_s ref_sol) {
+    assert(isfinite(coefs.coef_a));
+    assert(isfinite(coefs.coef_b));
+    assert(isfinite(coefs.coef_c));
+
+    if (ref_sol.count_sol > 0) {
+        assert(isfinite(ref_sol.first_sol));
+    }
+
+    if (ref_sol.count_sol > 1) {
+        assert(isfinite(ref_sol.second_sol));
+    }
+
+    solutions_s sol = {.count_sol = INIT_VALUE, .first_sol = NAN, .second_sol = NAN};
+
+    square_solver(coefs, &sol);
+
+    if (is_equally(sol.count_sol, ref_sol.count_sol) && is_equally(sol.first_sol, ref_sol.first_sol) && is_equally(sol.second_sol, ref_sol.second_sol)) {
+        return SUCCESS;
+    } else {
+        switch (ref_sol.count_sol) {
+            case ONE_SOLUTION:
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
+                        "The found roots: x = %lg\n"
+                        "a = %lg b = %lg c = %lg\n\n", sol.first_sol, coefs.coef_a, coefs.coef_b, coefs.coef_c);
+                return ERROR_IN_TEST;
+
+            case TWO_SOLUTIONS:
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
+                        "The found roots: x1 = %lg x2 = %lg\n"
+                        "a = %lg b = %lg c = %lg\n\n", sol.first_sol, sol.second_sol, coefs.coef_a, coefs.coef_b, coefs.coef_c);
+                return ERROR_IN_TEST;
+
+            case INFINITE_SOLUTIONS:
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
+                        "Expected: Infinite solution\n"
+                        "Count found roots: %d\n\n", sol.count_sol);
+                return ERROR_IN_TEST;
+
+            case NO_SOLUTIONS:
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
+                        "Expected: No solutions solution\n"
+                        "Count found roots: %d\n\n", sol.count_sol);
+                return ERROR_IN_TEST;
+
+            case INIT_VALUE:
+            default:
+                printf("Error in manual tests\n");
+                printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n",  __FILE__, __LINE__, __FUNCTION__);
+                return ERROR_IN_TEST;
+        }
+    }
+
+    return SUCCESS;
 }
 
 
@@ -515,12 +593,20 @@ error_code_e check_answer(const coefficients_s coefs, const solutions_s sol) {
     assert(isfinite(coefs.coef_b));
     assert(isfinite(coefs.coef_c));
 
+    if (sol.count_sol > 0) {
+        assert(isfinite(sol.first_sol));
+    }
+
+    if (sol.count_sol > 1) {
+        assert(isfinite(sol.second_sol));
+    }
+
     switch (sol.count_sol) {
 
         case ONE_SOLUTION:
             if (are_the_solution_correct(coefs, sol.first_sol)) {
-                printf( "Error during testing\n"
-                        "Wrong answer\n"
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
                         "The found roots: x = %lg\n"
                         "a = %lg b = %lg c = %lg\n"
                         "%s:%d  "  COLOR_TEXT("Error in", RED) " %s\n", sol.first_sol, coefs.coef_a, coefs.coef_b, coefs.coef_c,
@@ -531,8 +617,8 @@ error_code_e check_answer(const coefficients_s coefs, const solutions_s sol) {
 
         case TWO_SOLUTIONS:
             if (are_the_solution_correct(coefs, sol.first_sol) || are_the_solution_correct(coefs, sol.second_sol)) {
-                printf( "Error during testing\n"
-                        "Wrong answer\n"
+                printf( COLOR_TEXT("Error during testing\n"
+                        "Wrong answer\n", RED)
                         "The found roots: x1 = %lg x2 = %lg\n"
                         "a = %lg b = %lg c = %lg\n"
                         "%s:%d  Error in %s\n", sol.first_sol, sol.second_sol, coefs.coef_a, coefs.coef_b, coefs.coef_c, __FILE__, __LINE__, __FUNCTION__);
@@ -574,9 +660,22 @@ error_code_e clean_buffer(FILE* const file_input) {
     return error_code;
 }
 
+
 bool is_equally(const double lhs, const double rhs) {
+    if (isnan(lhs) && isnan(rhs)) {
+        return true;
+    }
+
     assert(isfinite(lhs));
     assert(isfinite(rhs));
 
     return fabs(lhs - rhs) < EPSILON;
 }
+
+
+double get_random_number() {
+    return (double)(rand() % 1000000) / (rand() % 5 + 1);
+}
+
+
+
