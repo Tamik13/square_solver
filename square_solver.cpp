@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
 
         if (run_all_tests() == ERROR_IN_TEST) {
             printf("%s:%d  " COLOR_TEXT("Error in ", RED) "%s\n", __FILE__, __LINE__, __FUNCTION__);
+
             return EXIT_FAILURE;
         }
 
@@ -295,8 +296,13 @@ error_code_e print_equation(const coefficients_s coefs) {
 
     if (is_equally(coefs.coef_b, 0)) {
         sign_b[0] = '\0';
-    } else if (coefs.coef_b < 0) {
+    } else if (coefs.coef_b < 0 && !is_equally(coefs.coef_a, 0)) {
         sign_b[2] = '-';
+    } else if (coefs.coef_b < 0 && is_equally(coefs.coef_a, 0)) {
+        sign_b[0] = '-';
+        sign_c[1] = '\0';
+    } else if (coefs.coef_b > 0 && is_equally(coefs.coef_a, 0)) {
+        sign_b[0] = '\0';
     }
 
     if (is_equally(coefs.coef_c, 0)) {
@@ -453,11 +459,11 @@ error_code_e print_output_to_terminal(const solutions_s sol) {
             break;
 
         case ONE_SOLUTION:
-            printf(COLOR_TEXT("One solution: %lg\n", GREEN), sol.first_sol);
+            printf(COLOR_TEXT("One solution: x = %lg\n", GREEN), sol.first_sol);
             break;
 
         case TWO_SOLUTIONS:
-            printf(COLOR_TEXT("Two solution: %lg %lg\n", GREEN), sol.first_sol, sol.second_sol);
+            printf(COLOR_TEXT("Two solution: x1 = %lg x2 = %lg\n", GREEN), sol.first_sol, sol.second_sol);
             break;
 
         case INFINITE_SOLUTIONS:
@@ -504,7 +510,7 @@ error_code_e print_output_to_file(const solutions_s sol) {
             break;
 
         case ONE_SOLUTION:
-            fprintf(file_output, "One solution: x1 = %lg\n", sol.first_sol);
+            fprintf(file_output, "One solution: x = %lg\n", sol.first_sol);
 
             break;
 
