@@ -80,6 +80,7 @@ coefficients_s restoring_coefficients(const solutions_s sol);
 error_code_e clean_buffer(FILE* const file_input);
 bool is_equally          (const double lhs, const double rhs);
 double get_random_number ();
+double minus_zero_to_zero(const double num);
 
 
 
@@ -346,7 +347,7 @@ error_code_e linear_solver(const coefficients_s coefs, solutions_s* const sol) {
     assert(sol != NULL);
 
     if (!is_equally(coefs.coef_b, 0)) {
-        sol->first_sol = -coefs.coef_c / coefs.coef_b;
+        sol->first_sol = minus_zero_to_zero(-coefs.coef_c / coefs.coef_b);
         sol->count_sol = ONE_SOLUTION;
         return SUCCESS;
     } else if (is_equally(coefs.coef_c, 0)) {
@@ -382,13 +383,13 @@ error_code_e square_solver(const coefficients_s coefs, solutions_s* const sol) {
         sol->count_sol = NO_SOLUTIONS;
         return SUCCESS;
     } else if (is_equally(discriminant, 0)) {
-        sol->first_sol = -coefs.coef_b / (2 * coefs.coef_a);
+        sol->first_sol = minus_zero_to_zero(-coefs.coef_b / (2 * coefs.coef_a));
         sol->count_sol = ONE_SOLUTION;
         return SUCCESS;
     }
 
-    sol->first_sol = (-coefs.coef_b + sqrt_discriminant) / (2 * coefs.coef_a);
-    sol->second_sol = (-coefs.coef_b - sqrt_discriminant) / (2 * coefs.coef_a);
+    sol->first_sol = minus_zero_to_zero((-coefs.coef_b + sqrt_discriminant) / (2 * coefs.coef_a));
+    sol->second_sol = minus_zero_to_zero((-coefs.coef_b - sqrt_discriminant) / (2 * coefs.coef_a));
 
     sol->count_sol = TWO_SOLUTIONS;
     return SUCCESS;
@@ -410,8 +411,8 @@ error_code_e where_print_output(const solutions_s sol) {
     bool is_input_read = false;
 
     read_one_from_terminal(&variant_output, CHAR,
-            "If you want print output to terminal - press T\n"
-            "else, if you want print output to file - press F\n");
+            "If you want print output to terminal - " COLOR_TEXT("press T\n", YELLOW)
+            "else, if you want print output to file - " COLOR_TEXT("press F\n", YELLOW));
 
     while (!is_input_read) {
         switch (variant_output) {
@@ -818,4 +819,8 @@ double get_random_number() {
 }
 
 
+double minus_zero_to_zero(const double num) {
+    assert(isfinite(num));
 
+    return (num == -0) ? 0 : num;
+}
