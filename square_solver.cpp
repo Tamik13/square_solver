@@ -9,6 +9,8 @@
 
 #define COLOR_TEXT(STR, COLOR) "\033[" COLOR "m" STR "\033[0m"
 
+#define ASSERT_AND_DO(condition, func) if (!condition) {printf("Assertion failed: function %s, file %s, line %d", __FUNCTION__, __FILE__, __LINE__); func;}
+
 #define DOUBLE       "%lg"
 #define UNSIGNED_INT "%ud"
 #define CHAR         "%c"
@@ -77,10 +79,10 @@ error_code_e check_answer            (const coefficients_s* const coefs, const s
 bool are_the_solution_correct        (const coefficients_s* const coefs, const double sol);
 coefficients_s restoring_coefficients(const solutions_s* const sol);
 
-error_code_e clean_buffer(FILE* const file_input);
-bool is_equally          (const double lhs, const double rhs);
-double get_random_number ();
-double minus_zero_to_zero(const double num);
+error_code_e clean_buffer (FILE* const file_input);
+bool is_equally           (const double lhs, const double rhs);
+double get_random_number  ();
+double fix_negative_zero  (const double num);
 
 
 
@@ -347,7 +349,7 @@ error_code_e linear_solver(const coefficients_s* const coefs, solutions_s* const
     assert(sol != NULL);
 
     if (!is_equally(coefs->coef_b, 0)) {
-        sol->first_sol = minus_zero_to_zero(-coefs->coef_c / coefs->coef_b);
+        sol->first_sol = fix_negative_zero(-coefs->coef_c / coefs->coef_b);
         sol->count_sol = ONE_SOLUTION;
         return SUCCESS;
     } else if (is_equally(coefs->coef_c, 0)) {
@@ -383,13 +385,13 @@ error_code_e square_solver(const coefficients_s* const coefs, solutions_s* const
         sol->count_sol = NO_SOLUTIONS;
         return SUCCESS;
     } else if (is_equally(discriminant, 0)) {
-        sol->first_sol = minus_zero_to_zero(-coefs->coef_b / (2 * coefs->coef_a));
+        sol->first_sol = fix_negative_zero(-coefs->coef_b / (2 * coefs->coef_a));
         sol->count_sol = ONE_SOLUTION;
         return SUCCESS;
     }
 
-    sol->first_sol = minus_zero_to_zero((-coefs->coef_b + sqrt_discriminant) / (2 * coefs->coef_a));
-    sol->second_sol = minus_zero_to_zero((-coefs->coef_b - sqrt_discriminant) / (2 * coefs->coef_a));
+    sol->first_sol = fix_negative_zero((-coefs->coef_b + sqrt_discriminant) / (2 * coefs->coef_a));
+    sol->second_sol = fix_negative_zero((-coefs->coef_b - sqrt_discriminant) / (2 * coefs->coef_a));
 
     sol->count_sol = TWO_SOLUTIONS;
     return SUCCESS;
@@ -655,7 +657,7 @@ error_code_e run_test_with_sol(const solutions_s* const ref_sol) {
 
 
 error_code_e run_manual_test(const coefficients_s* const coefs, const solutions_s* const ref_sol) {
-    assert(isfinite(coefs->coef_a));
+    ASSERT_AND_DO(isfinite(coefs->coef_a), exit(EXIT_FAILURE));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
 
@@ -819,7 +821,7 @@ double get_random_number() {
 }
 
 
-double minus_zero_to_zero(const double num) {
+double fix_negative_zero(const double num) {
     assert(isfinite(num));
 
     return (num == -0) ? 0 : num;
