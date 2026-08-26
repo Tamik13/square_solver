@@ -547,30 +547,32 @@ error_code_e run_all_tests() {
     srand(time_t());
 
     for (unsigned int i = 0; i < count_tests; i++) {
-
         const coefficients_s coefs = {.coef_a = get_random_number(), .coef_b = get_random_number(), .coef_c = get_random_number()};
         if (run_test_with_coefs(coefs) == ERROR_IN_TEST) {
             count_fail_tests++;
         }
-
     }
 
-    coefficients_s coefs_test1 = {.coef_a = 1, .coef_b = 2, .coef_c = 1};
-    solutions_s sol_test1 = {.count_sol = ONE_SOLUTION, .first_sol = -1, .second_sol = NAN};
-    if (run_manual_test(coefs_test1, sol_test1) == ERROR_IN_TEST) {
-            count_fail_tests++;
-    }
+    coefficients_s coefs_tests[] = {
+        {.coef_a = 1, .coef_b = 2, .coef_c = 1}, // coefs_tests[0]
+        {.coef_a = 0, .coef_b = 0, .coef_c = 0}, // coefs_tests[1]
+        {.coef_a = 0, .coef_b = 0, .coef_c = 5}  // coefs_tests[2]
+    };
+    size_t size_coefs_tests = sizeof(coefs_tests) / sizeof(coefs_tests[0]);
 
-    coefficients_s coefs_test2 = {.coef_a = 0, .coef_b = 0, .coef_c = 0};
-    solutions_s sol_test2 = {.count_sol = INFINITE_SOLUTIONS, .first_sol = NAN, .second_sol = NAN};
-    if (run_manual_test(coefs_test2, sol_test2) == ERROR_IN_TEST) {
-            count_fail_tests++;
-    }
+    solutions_s sol_tests[] = {
+        {.count_sol = ONE_SOLUTION, .first_sol = -1, .second_sol = NAN},        // sol_tests[0]
+        {.count_sol = INFINITE_SOLUTIONS, .first_sol = NAN, .second_sol = NAN}, // sol_tests[1]
+        {.count_sol = NO_SOLUTIONS, .first_sol = NAN, .second_sol = NAN}        // sol_tests[2]
+    };
+    size_t size_sol_tests = sizeof(sol_tests) / sizeof(sol_tests[0]);
 
-    coefficients_s coefs_test3 = {.coef_a = 0, .coef_b = 0, .coef_c = 5};
-    solutions_s sol_test3 = {.count_sol = NO_SOLUTIONS, .first_sol = NAN, .second_sol = NAN};
-    if (run_manual_test(coefs_test3, sol_test3) == ERROR_IN_TEST) {
+    assert(size_coefs_tests != size_sol_tests);
+
+    for (int i = 0; i < size_coefs_tests; i++) {
+        if (run_manual_test(coefs_tests[i], sol_tests[i]) == ERROR_IN_TEST) {
             count_fail_tests++;
+        }
     }
 
     printf("Count fail tests: %u\n", count_fail_tests);
