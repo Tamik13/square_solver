@@ -9,7 +9,7 @@
 
 #define COLOR_TEXT(STR, COLOR) "\033[" COLOR "m" STR "\033[0m"
 
-#define ASSERT_AND_DO(condition, func) if (!condition) {printf("Assertion failed: function %s, file %s, line %d", __FUNCTION__, __FILE__, __LINE__); func;}
+#define ASSERT_ANOTHER_DO(condition, func) if (!condition) {printf("Assertion failed: " #condition "function %s, file %s, line %d", __FUNCTION__, __FILE__, __LINE__); func;}
 
 #define DOUBLE       "%lg"
 #define UNSIGNED_INT "%ud"
@@ -657,7 +657,7 @@ error_code_e run_test_with_sol(const solutions_s* const ref_sol) {
 
 
 error_code_e run_manual_test(const coefficients_s* const coefs, const solutions_s* const ref_sol) {
-    ASSERT_AND_DO(isfinite(coefs->coef_a), exit(EXIT_FAILURE));
+    ASSERT_ANOTHER_DO(isfinite(coefs->coef_a), exit(EXIT_FAILURE));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
 
