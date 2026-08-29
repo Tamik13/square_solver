@@ -9,10 +9,18 @@
 
 #define COLOR_TEXT(STR, COLOR) "\033[" COLOR "m" STR "\033[0m"
 
-#define ASSERT_ANOTHER_DO(condition, func) if (!condition) {printf("Assertion failed: " #condition "function %s, file %s, line %d", __FUNCTION__, __FILE__, __LINE__); func;}
+#define ASSERT_ANOTHER_DO(condition, func)                                           \
+        if (!condition) {                                                            \
+            printf("Assertion failed: " #condition "function %s, file %s, line %d",  \
+                     __FUNCTION__, __FILE__, __LINE__);                              \
+            func;                                                                    \
+        }
+
+#define ASSERT_FOR_ARR(ind, size)    \
+        assert(0 <= ind && i < size)
 
 #define DOUBLE       "%lg"
-#define UNSIGNED_INT "%ud"
+#define UNSIGNED_INT "%u"
 #define CHAR         "%c"
 #define INT          "%d"
 
@@ -57,6 +65,7 @@ struct solutions_s {
     count_solutions_e count_sol;
 };
 
+// read input functions
 error_code_e where_from_read_input   (coefficients_s* const coefs);
 error_code_e read_input_from_terminal(coefficients_s* const coefs);
 error_code_e read_input_from_file    (coefficients_s* const coefs);
@@ -64,13 +73,16 @@ error_code_e read_one_from_terminal  (void* const coef, const char* const type, 
 error_code_e read_one_from_file      (void* const coef, const char* const type, FILE* const file_input, int* const line_in_input_file);
 error_code_e print_equation          (const coefficients_s* const coefs);
 
+// math functions
 error_code_e linear_solver(const coefficients_s* const coefs, solutions_s* const sol);
 error_code_e square_solver(const coefficients_s* const coefs, solutions_s* const sol);
 
+// print output functions
 error_code_e where_print_output      (const solutions_s* const sol);
 error_code_e print_output_to_terminal(const solutions_s* const sol);
 error_code_e print_output_to_file    (const solutions_s* const sol);
 
+// tests functions
 error_code_e run_all_tests           ();
 error_code_e run_test_with_coefs     (const coefficients_s* const coefs);
 error_code_e run_test_with_sol       (const solutions_s* const ref_sol);
@@ -79,6 +91,7 @@ error_code_e check_answer            (const coefficients_s* const coefs, const s
 bool are_the_solution_correct        (const coefficients_s* const coefs, const double sol);
 coefficients_s restoring_coefficients(const solutions_s* const sol);
 
+// common functions
 error_code_e clean_buffer (FILE* const file_input);
 bool is_equally           (const double lhs, const double rhs);
 double get_random_number  ();
@@ -276,6 +289,7 @@ error_code_e read_one_from_file(void* const coef, const char* const type, FILE* 
 
 
 error_code_e print_equation(const coefficients_s* const coefs) {
+    assert(coefs != NULL);
     assert(isfinite(coefs->coef_a));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
@@ -343,10 +357,11 @@ error_code_e print_equation(const coefficients_s* const coefs) {
 
 
 error_code_e linear_solver(const coefficients_s* const coefs, solutions_s* const sol) {
+    assert(sol != NULL);
+    assert(coefs != NULL);
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
 
-    assert(sol != NULL);
 
     if (!is_equally(coefs->coef_b, 0)) {
         sol->first_sol = fix_negative_zero(-coefs->coef_c / coefs->coef_b);
@@ -363,11 +378,11 @@ error_code_e linear_solver(const coefficients_s* const coefs, solutions_s* const
 
 
 error_code_e square_solver(const coefficients_s* const coefs, solutions_s* const sol) {
+    assert(sol != NULL);
+    assert(coefs != NULL);
     assert(isfinite(coefs->coef_a));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
-
-    assert(sol != NULL);
 
     if (is_equally(coefs->coef_a, 0)) {
         if (linear_solver(coefs, sol) == ERROR_IN_MATH) {
@@ -400,6 +415,8 @@ error_code_e square_solver(const coefficients_s* const coefs, solutions_s* const
 
 
 error_code_e where_print_output(const solutions_s* const sol) {
+    assert(sol != NULL);
+
     if (sol->count_sol > 0) {
         assert(isfinite(sol->first_sol));
     }
@@ -448,6 +465,8 @@ error_code_e where_print_output(const solutions_s* const sol) {
 
 
 error_code_e print_output_to_terminal(const solutions_s* const sol) {
+    assert(sol != NULL);
+
     if (sol->count_sol > 0) {
         assert(isfinite(sol->first_sol));
     }
@@ -489,6 +508,8 @@ error_code_e print_output_to_terminal(const solutions_s* const sol) {
 
 
 error_code_e print_output_to_file(const solutions_s* const sol) {
+    assert(sol != NULL);
+
     if (sol->count_sol > 0) {
         assert(isfinite(sol->first_sol));
     }
@@ -578,7 +599,7 @@ error_code_e run_all_tests() {
 
 
     coefficients_s coefs_tests[] = {
-        {.coef_a = NAN, .coef_b = 2, .coef_c = 1}, // coefs_tests[0]
+        {.coef_a = 1, .coef_b = 2, .coef_c = 1}, // coefs_tests[0]
         {.coef_a = 0, .coef_b = 0, .coef_c = 0}, // coefs_tests[1]
         {.coef_a = 0, .coef_b = 0, .coef_c = 5}  // coefs_tests[2]
     };
@@ -594,8 +615,8 @@ error_code_e run_all_tests() {
     assert(size_coefs_tests == size_sol_tests);
 
     for (size_t i = 0; i < size_coefs_tests; i++) {
-        assert(0 <= i && i < size_coefs_tests);
-        assert(0 <= i && i < size_sol_tests);
+        ASSERT_FOR_ARR(i, size_coefs_tests);
+        ASSERT_FOR_ARR(i, size_sol_tests);
 
         if (run_manual_test(&coefs_tests[i], &sol_tests[i]) == ERROR_IN_TEST) {
             count_fail_tests++;
@@ -613,6 +634,7 @@ error_code_e run_all_tests() {
 
 
 error_code_e run_test_with_coefs(const coefficients_s* const coefs) {
+    assert(coefs != NULL);
     assert(isfinite(coefs->coef_a));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
@@ -631,6 +653,7 @@ error_code_e run_test_with_coefs(const coefficients_s* const coefs) {
 
 
 error_code_e run_test_with_sol(const solutions_s* const ref_sol) {
+    assert(ref_sol != NULL);
     assert(isfinite(ref_sol->first_sol));
     assert(isfinite(ref_sol->second_sol));
 
@@ -657,6 +680,8 @@ error_code_e run_test_with_sol(const solutions_s* const ref_sol) {
 
 
 error_code_e run_manual_test(const coefficients_s* const coefs, const solutions_s* const ref_sol) {
+    assert(coefs != NULL);
+    assert(ref_sol != NULL);
     ASSERT_ANOTHER_DO(isfinite(coefs->coef_a), exit(EXIT_FAILURE));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
@@ -721,6 +746,8 @@ error_code_e run_manual_test(const coefficients_s* const coefs, const solutions_
 
 
 error_code_e check_answer(const coefficients_s* const coefs, const solutions_s* const sol) {
+    assert(coefs != NULL);
+    assert(sol != NULL);
     assert(isfinite(coefs->coef_a));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
@@ -771,6 +798,7 @@ error_code_e check_answer(const coefficients_s* const coefs, const solutions_s* 
 
 
 bool are_the_solution_correct(const coefficients_s* const coefs, const double sol) {
+    assert(coefs != NULL);
     assert(isfinite(coefs->coef_a));
     assert(isfinite(coefs->coef_b));
     assert(isfinite(coefs->coef_c));
@@ -781,6 +809,7 @@ bool are_the_solution_correct(const coefficients_s* const coefs, const double so
 
 
 coefficients_s restoring_coefficients(const solutions_s* const sol) {
+    assert(sol != NULL);
     assert(isfinite(sol->first_sol));
     assert(isfinite(sol->second_sol));
 
