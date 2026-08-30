@@ -17,7 +17,7 @@
         }
 
 #define ASSERT_FOR_ARR(ind, size)    \
-        assert(0 <= ind && i < size)
+        assert(0 <= ind && ind < size)
 
 #define DOUBLE       "%lg"
 #define UNSIGNED_INT "%u"
